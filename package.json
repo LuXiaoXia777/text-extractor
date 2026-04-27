@@ -1,0 +1,20 @@
+{
+  "name": "xhs-link-to-text-web",
+  "version": "0.1.0",
+  "private": true,
+  "description": "MVP for parsing Xiaohongshu share text and extracting note metadata.",
+  "main": "server.js",
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "cheerio": "^1.2.0",
+    "dotenv": "^17.4.2",
+    "express": "^5.2.1",
+    "puppeteer-core": "^24.42.0"
+  }
+}
