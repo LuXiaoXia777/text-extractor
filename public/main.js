@@ -1,13 +1,25 @@
 const input = document.getElementById("input");
-const mediaUrlInput = document.getElementById("mediaUrl");
 const modelPreset = document.getElementById("modelPreset");
 const modelHint = document.getElementById("modelHint");
-const submit = document.getElementById("submit");
-const transcribeButton = document.getElementById("transcribe");
+const runAllButton = document.getElementById("runAll");
+const copyTranscriptButton = document.getElementById("copyTranscript");
+const retryParseButton = document.getElementById("retryParse");
 const statusEl = document.getElementById("status");
 const resultEl = document.getElementById("result");
 const transcriptCard = document.getElementById("transcriptCard");
 let configStatus = null;
+
+function needsRetryParse(data) {
+  const missingTitle = !data.title || data.title === "-";
+  const missingAuthor = !data.author || data.author === "-";
+  const noteText = data.noteText || data.description || "";
+  const missingNoteText = !noteText || noteText === "没有抓到正文。";
+  return missingTitle || missingAuthor || missingNoteText;
+}
+
+function syncRetryParseButton(shouldShow) {
+  retryParseButton.classList.toggle("hidden", !shouldShow);
+}
 
 function setStatus(message, isError = false) {
   statusEl.textContent = message;
@@ -20,37 +32,10 @@ function setText(id, value) {
 
 function renderResult(data) {
   resultEl.classList.remove("hidden");
-  setText("noteId", data.noteId);
   setText("title", data.title);
   setText("author", data.author);
-  setText("description", data.description);
-  setText("httpStatus", String(data.httpStatus || "-"));
-  setText("parserMode", data.parserMode || "-");
-  setText("videoCount", String((data.videoCandidates || []).length));
-  setText("jsonDetected", data.jsonDetected ? "是" : "否");
   setText("noteText", data.noteText || data.description || "没有抓到正文。");
-  setText("videoCandidates", (data.videoCandidates || []).join("\n") || "没有识别到候选视频 URL。");
-
-  const finalUrl = document.getElementById("finalUrl");
-  finalUrl.href = data.finalUrl || data.inputUrl;
-  finalUrl.textContent = data.finalUrl || data.inputUrl;
-
-  const cover = document.getElementById("cover");
-  if (data.cover) {
-    cover.src = data.cover;
-    cover.style.display = "block";
-  } else {
-    cover.removeAttribute("src");
-    cover.style.display = "none";
-  }
-
-  const hints = document.getElementById("hints");
-  hints.innerHTML = "";
-  for (const hint of data.hints || []) {
-    const li = document.createElement("li");
-    li.textContent = hint;
-    hints.appendChild(li);
-  }
+  syncRetryParseButton(needsRetryParse(data));
 }
 
 function formatDuration(value) {
@@ -63,17 +48,8 @@ function formatDuration(value) {
 
 function renderTranscript(data) {
   transcriptCard.classList.remove("hidden");
-  setText("sourceType", data.sourceType);
-  setText("usedModel", data.model || "-");
-  setText("sourceDuration", formatDuration(data.sourceDurationSec));
   setText("audioDuration", formatDuration(data.audioDurationSec));
-  setText("segmentCount", String(data.segmentCount || 0));
-  setText("transcribeWarning", data.warning || "已成功转写。");
   setText("transcriptText", data.transcript || "当前没有文字稿。请先确认本地 faster-whisper 环境已安装完成。");
-  setText(
-    "providerInfo",
-    data.provider === "faster-whisper" ? `${data.provider} · ${data.model}` : "仅完成抽音频"
-  );
 }
 
 function refreshModelHint() {
@@ -98,50 +74,19 @@ async function loadConfigStatus() {
   } catch (_error) {}
 }
 
-submit.addEventListener("click", async () => {
-  const value = input.value.trim();
-  if (!value) {
-    setStatus("先输入一段分享文案或链接。", true);
-    return;
-  }
-
-  setStatus("正在解析小红书链接...");
-  resultEl.classList.add("hidden");
-
-  try {
-    const response = await fetch("/api/parse", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({ input: value })
-    });
-    const data = await response.json();
-
-    if (!response.ok || !data.ok) {
-      throw new Error(data.error || "解析失败");
-    }
-
-    renderResult(data);
-    setStatus("解析完成。这个版本先验证链路，结果不稳定是正常的。");
-  } catch (error) {
-    setStatus(error.message, true);
-  }
-});
-
 modelPreset.addEventListener("change", refreshModelHint);
 
-transcribeButton.addEventListener("click", async () => {
+runAllButton.addEventListener("click", async () => {
   const inputValue = input.value.trim();
-  const mediaUrl = mediaUrlInput.value.trim();
   const selectedModel = modelPreset.value;
 
-  if (!inputValue && !mediaUrl) {
-    setStatus("请先输入小红书链接，或者直接填入视频直链。", true);
+  if (!inputValue) {
+    setStatus("请先输入小红书链接或分享文案。", true);
     return;
   }
 
-  setStatus("正在下载媒体、抽音频并尝试转写...");
+  setStatus("正在解析小红书链接并转文字...");
+  resultEl.classList.add("hidden");
   transcriptCard.classList.add("hidden");
 
   try {
@@ -152,7 +97,6 @@ transcribeButton.addEventListener("click", async () => {
       },
       body: JSON.stringify({
         input: inputValue,
-        mediaUrl,
         model: selectedModel
       })
     });
@@ -162,8 +106,56 @@ transcribeButton.addEventListener("click", async () => {
       throw new Error(data.error || "转写失败");
     }
 
+    renderResult(data);
     renderTranscript(data);
     setStatus(data.warning || "转写完成。");
+  } catch (error) {
+    setStatus(error.message, true);
+  }
+});
+
+copyTranscriptButton.addEventListener("click", async () => {
+  const text = document.getElementById("transcriptText").textContent.trim();
+  if (!text || text === "-" || text === "当前没有文字稿。请先确认本地 faster-whisper 环境已安装完成。") {
+    setStatus("当前没有可复制的文字稿。", true);
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(text);
+    setStatus("文字稿已复制。");
+  } catch (_error) {
+    setStatus("复制失败，请手动选择文字稿复制。", true);
+  }
+});
+
+retryParseButton.addEventListener("click", async () => {
+  const inputValue = input.value.trim();
+  if (!inputValue) {
+    setStatus("请先输入小红书链接或分享文案。", true);
+    return;
+  }
+
+  setStatus("正在再次解析解析结果...");
+
+  try {
+    const response = await fetch("/api/parse", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        input: inputValue
+      })
+    });
+    const data = await response.json();
+
+    if (!response.ok || !data.ok) {
+      throw new Error(data.error || "再次解析失败");
+    }
+
+    renderResult(data);
+    setStatus(needsRetryParse(data) ? "再次解析完成，但仍有部分内容未抓到。" : "再次解析完成。");
   } catch (error) {
     setStatus(error.message, true);
   }

@@ -119,6 +119,24 @@ function looksLikeMediaUrl(url) {
   return Boolean(url && /\.(mp4|m3u8)(\?|$)/i.test(url));
 }
 
+function isUsableCoverUrl(url) {
+  return Boolean(
+    url &&
+      /^https?:\/\//i.test(url) &&
+      !/^data:/i.test(url)
+  );
+}
+
+function pickBestCover(candidates) {
+  for (const candidate of candidates) {
+    const value = cleanText(candidate);
+    if (isUsableCoverUrl(value)) {
+      return value;
+    }
+  }
+  return "";
+}
+
 function extractVideoUrlsFromHtml(html) {
   const matches = html.match(/https?:\/\/[^"'\\\s<>]+(?:mp4|m3u8)[^"'\\\s<>]*/gi) || [];
   const normalized = matches
@@ -135,9 +153,12 @@ function parseHtml(html, finalUrl) {
   const description =
     cleanText($('meta[property="og:description"]').attr("content")) ||
     cleanText($('meta[name="description"]').attr("content"));
-  const image =
-    cleanText($('meta[property="og:image"]').attr("content")) ||
-    cleanText($("img").first().attr("src"));
+  const image = pickBestCover([
+    $('meta[property="og:image"]').attr("content"),
+    $('meta[name="twitter:image"]').attr("content"),
+    $('img[src^="http"]').first().attr("src"),
+    $('img').first().attr("src")
+  ]);
   const ogVideo = cleanText($('meta[property="og:video"]').attr("content"));
 
   const author =
@@ -315,10 +336,12 @@ async function resolveMediaWithBrowser(url) {
         if (element.currentSrc) urls.push(element.currentSrc);
       });
 
-      const coverMeta =
-        document.querySelector('meta[property="og:image"]')?.getAttribute("content") ||
-        document.querySelector("img")?.getAttribute("src") ||
-        "";
+      const coverCandidates = [
+        document.querySelector('meta[property="og:image"]')?.getAttribute("content") || "",
+        document.querySelector('meta[name="twitter:image"]')?.getAttribute("content") || "",
+        document.querySelector('img[src^="http"]')?.getAttribute("src") || "",
+        document.querySelector("img")?.getAttribute("src") || ""
+      ];
 
       Array.from(document.scripts).forEach((script) => {
         const text = script.textContent || "";
@@ -329,13 +352,13 @@ async function resolveMediaWithBrowser(url) {
       return {
         urls,
         title: document.title || "",
-        cover: coverMeta
+        coverCandidates
       };
     });
 
     finalUrl = page.url();
     title = domData.title || "";
-    cover = domData.cover || "";
+    cover = pickBestCover(domData.coverCandidates || []);
     noteId = extractNoteIdFromUrl(finalUrl) || "";
 
     domData.urls

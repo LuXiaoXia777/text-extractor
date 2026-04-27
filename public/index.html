@@ -10,36 +10,27 @@
     <main class="page">
       <section class="hero">
         <p class="eyebrow">Xiaohongshu Parser MVP</p>
-        <h1>把小红书分享链接先变成结构化内容</h1>
-        <p class="subcopy">
-          这个版本先验证解析链路：输入分享文案或链接，提取笔记链接、尝试抓取标题、作者、封面和正文片段。真正的视频转写会放在下一步。
-        </p>
+        <h1>小红书视频转文字</h1>
       </section>
 
       <section class="panel">
-        <label class="label" for="input">分享文案或链接</label>
+        <div class="panel-head">
+          <label class="label" for="input">分享文案或链接</label>
+          <div class="model-inline">
+            <select id="modelPreset" aria-label="转写速度档位">
+              <option value="tiny">极速 · tiny</option>
+              <option value="base">均衡 · base</option>
+              <option value="small">更准 · small</option>
+            </select>
+          </div>
+        </div>
         <textarea
           id="input"
           placeholder="例如：54 小明发布了一篇小红书笔记，快来看吧！ 😆 3PqAbCdEfGh 😆 https://xhslink.com/xxxxx，复制本条信息，打开【小红书】App查看精彩内容！"
         ></textarea>
-        <label class="label top-gap" for="mediaUrl">或手动提供视频直链</label>
-        <input
-          id="mediaUrl"
-          type="text"
-          placeholder="如果你已经拿到了 mp4 直链，可以直接填这里跳过笔记页解析"
-        />
-        <div class="top-gap model-panel">
-          <label class="label" for="modelPreset">转写速度档位</label>
-          <select id="modelPreset">
-            <option value="tiny">极速 · tiny</option>
-            <option value="base">均衡 · base</option>
-            <option value="small">更准 · small</option>
-          </select>
-          <p id="modelHint" class="helper">默认读取当前服务配置。</p>
-        </div>
+        <p id="modelHint" class="helper top-gap">默认读取当前服务配置。</p>
         <div class="actions">
-          <button id="submit">开始解析</button>
-          <button id="transcribe" class="ghost">抽音频并转文字</button>
+          <button id="runAll">一键解析并转文字</button>
         </div>
         <p id="status" class="status"></p>
       </section>
@@ -47,52 +38,30 @@
       <section id="result" class="result hidden">
         <div class="result-head">
           <h2>解析结果</h2>
-          <a id="finalUrl" target="_blank" rel="noreferrer">打开最终页面</a>
+          <button id="retryParse" class="ghost small hidden" type="button">再次解析</button>
         </div>
-        <div class="result-grid">
-          <div class="meta">
-            <div class="meta-row"><span>Note ID</span><strong id="noteId">-</strong></div>
-            <div class="meta-row"><span>标题</span><strong id="title">-</strong></div>
-            <div class="meta-row"><span>作者</span><strong id="author">-</strong></div>
-            <div class="meta-row"><span>描述</span><strong id="description">-</strong></div>
-            <div class="meta-row"><span>页面状态</span><strong id="httpStatus">-</strong></div>
-            <div class="meta-row"><span>解析模式</span><strong id="parserMode">-</strong></div>
-            <div class="meta-row"><span>视频候选数</span><strong id="videoCount">-</strong></div>
-            <div class="meta-row"><span>JSON 痕迹</span><strong id="jsonDetected">-</strong></div>
-          </div>
-          <div class="cover-wrap">
-            <img id="cover" alt="封面预览" />
-          </div>
+        <div class="meta">
+          <div class="meta-row"><span>标题</span><strong id="title">-</strong></div>
+          <div class="meta-row"><span>作者</span><strong id="author">-</strong></div>
         </div>
         <div class="text-block">
           <h3>正文片段</h3>
           <pre id="noteText"></pre>
-        </div>
-        <div class="text-block">
-          <h3>候选视频 URL</h3>
-          <pre id="videoCandidates"></pre>
-        </div>
-        <div class="text-block">
-          <h3>提示</h3>
-          <ul id="hints"></ul>
         </div>
       </section>
 
       <section id="transcriptCard" class="result hidden">
         <div class="result-head">
           <h2>转写结果</h2>
-          <span id="providerInfo" class="provider-badge">-</span>
         </div>
         <div class="meta">
-          <div class="meta-row"><span>来源类型</span><strong id="sourceType">-</strong></div>
-          <div class="meta-row"><span>模型档位</span><strong id="usedModel">-</strong></div>
-          <div class="meta-row"><span>视频时长</span><strong id="sourceDuration">-</strong></div>
           <div class="meta-row"><span>音频时长</span><strong id="audioDuration">-</strong></div>
-          <div class="meta-row"><span>分段数</span><strong id="segmentCount">-</strong></div>
-          <div class="meta-row"><span>提示</span><strong id="transcribeWarning">-</strong></div>
         </div>
         <div class="text-block">
-          <h3>文字稿</h3>
+          <div class="text-head">
+            <h3>文字稿</h3>
+            <button id="copyTranscript" class="ghost small" type="button">复制文字稿</button>
+          </div>
           <pre id="transcriptText"></pre>
         </div>
       </section>
