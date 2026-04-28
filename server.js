@@ -18,6 +18,9 @@ const CHROME_EXECUTABLE_PATH =
   process.env.CHROME_EXECUTABLE_PATH ||
   "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome";
 const XHS_COOKIE = process.env.XHS_COOKIE || "";
+const X_COOKIE = process.env.X_COOKIE || "";
+const X_COOKIE_FILE = process.env.X_COOKIE_FILE || "";
+const YT_DLP_BIN = process.env.YT_DLP_BIN || "yt-dlp";
 const MODEL_OPTIONS = {
   tiny: { label: "极速", description: "最快，准确率较低" },
   base: { label: "均衡", description: "速度和准确率更平衡" },
@@ -117,6 +120,10 @@ function decodeEscapedUrl(value) {
 
 function looksLikeMediaUrl(url) {
   return Boolean(url && /\.(mp4|m3u8)(\?|$)/i.test(url));
+}
+
+function looksLikeImageUrl(url) {
+  return Boolean(url && /^https?:\/\//i.test(url) && /\.(jpg|jpeg|png|webp)(\?|$)/i.test(url));
 }
 
 function isUsableCoverUrl(url) {
@@ -227,6 +234,51 @@ function buildMediaHints({ usedBrowser, hasCookie, videoCandidates }) {
   }
 
   return hints;
+}
+
+function buildXHints({ parserMode, hasCookie, hasYtDlp, hasDownloadUrl }) {
+  const hints = [];
+  if (parserMode === "browser") {
+    hints.push("本次通过浏览器抓取解析 X 页面。");
+  }
+  if (parserMode === "yt-dlp") {
+    hints.push("本次通过 yt-dlp 兜底解析 X 视频。");
+  }
+  if (!hasCookie) {
+    hints.push("当前没有配置 X 登录态，受限内容可能无法解析。");
+  }
+  if (!hasYtDlp) {
+    hints.push("当前环境没有安装 yt-dlp，浏览器抓取失败时将少一层兜底。");
+  }
+  if (!hasDownloadUrl) {
+    hints.push("当前未拿到稳定下载地址。");
+  }
+  return hints;
+}
+
+function extractXStatusId(url) {
+  const patterns = [
+    /x\.com\/[^/]+\/status\/(\d+)/i,
+    /twitter\.com\/[^/]+\/status\/(\d+)/i
+  ];
+  for (const pattern of patterns) {
+    const match = url.match(pattern);
+    if (match) return match[1];
+  }
+  return "";
+}
+
+function isXUrl(url) {
+  return /https?:\/\/(?:www\.)?(?:x\.com|twitter\.com)\//i.test(url);
+}
+
+async function hasYtDlpSupport() {
+  try {
+    await runCommand(YT_DLP_BIN, ["--version"]);
+    return true;
+  } catch (_error) {
+    return false;
+  }
 }
 
 async function resolveRedirect(url) {
@@ -377,6 +429,401 @@ async function resolveMediaWithBrowser(url) {
   } finally {
     await browser.close();
   }
+}
+
+async function resolveXWithBrowser(url) {
+  if (!hasBrowserSupport()) {
+    return {
+      ok: false,
+      parserMode: "browser",
+      error: `未找到 Chrome 可执行文件：${CHROME_EXECUTABLE_PATH}`
+    };
+  }
+
+  const browser = await puppeteer.launch({
+    executablePath: CHROME_EXECUTABLE_PATH,
+    headless: true,
+    args: [
+      "--no-sandbox",
+      "--disable-setuid-sandbox",
+      "--disable-blink-features=AutomationControlled",
+      "--lang=en-US",
+      "--window-size=1440,900"
+    ]
+  });
+
+  const mediaCandidates = new Set();
+
+  try {
+    const page = await browser.newPage();
+    await page.setViewport({ width: 1440, height: 900, deviceScaleFactor: 1 });
+    await page.setUserAgent(
+      "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36"
+    );
+    await page.setExtraHTTPHeaders({
+      "accept-language": "en-US,en;q=0.9",
+      referer: "https://x.com/"
+    });
+    await page.evaluateOnNewDocument(() => {
+      Object.defineProperty(navigator, "webdriver", {
+        get: () => false
+      });
+    });
+
+    if (X_COOKIE) {
+      await page.setExtraHTTPHeaders({
+        "accept-language": "en-US,en;q=0.9",
+        referer: "https://x.com/",
+        cookie: X_COOKIE
+      });
+    }
+
+    page.on("response", async (response) => {
+      try {
+        const responseUrl = response.url();
+        const contentType = response.headers()["content-type"] || "";
+        if (
+          looksLikeMediaUrl(responseUrl) ||
+          /video|mpegurl|mp4|application\/octet-stream/i.test(contentType)
+        ) {
+          mediaCandidates.add(responseUrl);
+        }
+      } catch (_error) {}
+    });
+
+    await page.goto(url, {
+      waitUntil: "domcontentloaded",
+      timeout: 30000
+    });
+    await sleep(3000);
+
+    const domData = await page.evaluate(() => {
+      const getMeta = (selector) => document.querySelector(selector)?.getAttribute("content") || "";
+      const textCandidates = [];
+      const authorCandidates = [];
+      const mediaCandidates = [];
+
+      document.querySelectorAll("video, source").forEach((element) => {
+        const src = element.getAttribute("src");
+        if (src) mediaCandidates.push(src);
+        if (element.currentSrc) mediaCandidates.push(element.currentSrc);
+      });
+
+      document.querySelectorAll("[data-testid='tweetText']").forEach((node) => {
+        const value = (node.textContent || "").trim();
+        if (value) textCandidates.push(value);
+      });
+
+      document.querySelectorAll("[data-testid='User-Name']").forEach((node) => {
+        const value = (node.textContent || "").trim();
+        if (value) authorCandidates.push(value);
+      });
+
+      return {
+        title: document.title || "",
+        description: getMeta('meta[property="og:description"]') || getMeta('meta[name="description"]'),
+        author: getMeta('meta[name="twitter:title"]'),
+        cover: getMeta('meta[property="og:image"]') || getMeta('meta[name="twitter:image"]'),
+        text: textCandidates.join("\n"),
+        authorCandidates,
+        mediaCandidates
+      };
+    });
+
+    const browserUrl = page.url();
+    const statusId = extractXStatusId(browserUrl);
+    domData.mediaCandidates
+      .map(decodeEscapedUrl)
+      .filter(looksLikeMediaUrl)
+      .forEach((item) => mediaCandidates.add(item));
+
+    const bestDownloadUrl = unique([...mediaCandidates])[0] || "";
+    const author =
+      cleanText(domData.authorCandidates[0]) ||
+      cleanText(domData.author).replace(/\s*on X:?/i, "").trim();
+    const text = cleanText(domData.text) || cleanText(domData.description);
+    const cover = looksLikeImageUrl(domData.cover) ? domData.cover : "";
+    const title = cleanText(domData.title).replace(/\s*\/ X$/i, "").trim();
+
+    if (!statusId || !bestDownloadUrl) {
+      return {
+        ok: false,
+        parserMode: "browser",
+        requiresAuth: /login|sign in/i.test(browserUrl),
+        error: "浏览器抓取未拿到稳定视频地址。",
+        finalUrl: browserUrl,
+        title,
+        author,
+        text,
+        cover
+      };
+    }
+
+    return {
+      ok: true,
+      parserMode: "browser",
+      statusId,
+      finalUrl: browserUrl,
+      title,
+      author,
+      text,
+      cover,
+      durationSec: 0,
+      formats: [],
+      downloadUrl: bestDownloadUrl,
+      requiresAuth: false
+    };
+  } finally {
+    await browser.close();
+  }
+}
+
+async function createTempCookieFileFromHeader(cookieHeader) {
+  const tempDir = await fsp.mkdtemp(path.join(os.tmpdir(), "x-cookie-"));
+  const cookiePath = path.join(tempDir, "cookies.txt");
+  const rows = ["# Netscape HTTP Cookie File"];
+  const pairs = cookieHeader
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const idx = part.indexOf("=");
+      return idx === -1 ? null : [part.slice(0, idx), part.slice(idx + 1)];
+    })
+    .filter(Boolean);
+
+  for (const [name, value] of pairs) {
+    rows.push([`.x.com`, "TRUE", "/", "FALSE", "2147483647", name, value].join("\t"));
+    rows.push([`.twitter.com`, "TRUE", "/", "FALSE", "2147483647", name, value].join("\t"));
+  }
+
+  await fsp.writeFile(cookiePath, `${rows.join("\n")}\n`, "utf8");
+  return { tempDir, cookiePath };
+}
+
+function pickBestXFormat(formats) {
+  const candidates = (formats || []).filter(
+    (format) => format && format.url && (format.ext === "mp4" || looksLikeMediaUrl(format.url))
+  );
+  candidates.sort((a, b) => (b.height || 0) - (a.height || 0));
+  return candidates[0] || null;
+}
+
+function summarizeFormats(formats) {
+  return (formats || [])
+    .filter((format) => format && format.url)
+    .map((format) => ({
+      formatId: format.format_id || "",
+      ext: format.ext || "",
+      width: format.width || 0,
+      height: format.height || 0,
+      fps: format.fps || 0,
+      filesize: format.filesize || 0,
+      formatNote: format.format_note || ""
+    }))
+    .filter((format) => format.ext || format.height || format.formatNote)
+    .slice(0, 8);
+}
+
+function parseYtDlpEntries(stdout) {
+  return stdout
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => JSON.parse(line));
+}
+
+function pickBestYtDlpEntry(entries) {
+  const videos = entries
+    .map((entry) => ({
+      entry,
+      bestFormat: pickBestXFormat(entry.formats || [])
+    }))
+    .filter((item) => item.bestFormat);
+
+  videos.sort((a, b) => (b.bestFormat.height || 0) - (a.bestFormat.height || 0));
+  return videos[0] || null;
+}
+
+async function resolveXWithYtDlp(url) {
+  const hasBinary = await hasYtDlpSupport();
+  if (!hasBinary) {
+    return {
+      ok: false,
+      parserMode: "yt-dlp",
+      error: "当前环境没有安装 yt-dlp。"
+    };
+  }
+
+  let cleanup = null;
+  const args = ["--dump-json", "--no-playlist", url];
+
+  if (X_COOKIE_FILE) {
+    args.unshift(X_COOKIE_FILE);
+    args.unshift("--cookies");
+  } else if (X_COOKIE) {
+    cleanup = await createTempCookieFileFromHeader(X_COOKIE);
+    args.unshift(cleanup.cookiePath);
+    args.unshift("--cookies");
+  }
+
+  try {
+    const { stdout } = await runCommand(YT_DLP_BIN, args);
+    const entries = parseYtDlpEntries(stdout);
+    const selected = pickBestYtDlpEntry(entries);
+
+    if (!selected) {
+      return {
+        ok: false,
+        parserMode: "yt-dlp",
+        requiresAuth: /login|private|not available/i.test(stdout),
+        error: "yt-dlp 未拿到稳定视频地址。"
+      };
+    }
+
+    const parsed = selected.entry;
+    const bestFormat = selected.bestFormat;
+    const statusId = extractXStatusId(parsed.webpage_url || parsed.playlist_webpage_url || url);
+    const author = cleanText(parsed.uploader || parsed.channel || parsed.uploader_id || "");
+    const text = cleanText(parsed.description || parsed.fulltitle || parsed.title || "");
+    const title = cleanText(parsed.title || parsed.fulltitle || "");
+    const cover = looksLikeImageUrl(parsed.thumbnail || "") ? parsed.thumbnail : "";
+
+    if (!statusId || !bestFormat?.url) {
+      return {
+        ok: false,
+        parserMode: "yt-dlp",
+        requiresAuth: /login|private|not available/i.test(stdout),
+        error: "yt-dlp 未拿到稳定视频地址。",
+        title,
+        author,
+        text,
+        cover
+      };
+    }
+
+    return {
+      ok: true,
+      parserMode: "yt-dlp",
+      statusId,
+      finalUrl: parsed.webpage_url || url,
+      title,
+      author,
+      text,
+      cover,
+      durationSec: Number(parsed.duration || 0),
+      formats: summarizeFormats(parsed.formats),
+      downloadUrl: bestFormat.url,
+      requiresAuth: false
+    };
+  } catch (error) {
+    const message = error.message || "yt-dlp 解析失败。";
+    return {
+      ok: false,
+      parserMode: "yt-dlp",
+      requiresAuth: /sign in|login|private|cookies/i.test(message),
+      error: message
+    };
+  } finally {
+    if (cleanup?.tempDir) {
+      await fsp.rm(cleanup.tempDir, { recursive: true, force: true });
+    }
+  }
+}
+
+async function prepareXVideoFromRequest(input) {
+  const url = extractFirstUrl(input || "");
+  if (!url || !isXUrl(url)) {
+    throw new Error("请输入有效的 X 视频链接。");
+  }
+
+  const browserResult = await resolveXWithBrowser(url);
+  const ytDlpAvailable = await hasYtDlpSupport();
+  const browserNeedsUpgrade =
+    browserResult.ok &&
+    (
+      !browserResult.downloadUrl ||
+      /\.m3u8(\?|$)/i.test(browserResult.downloadUrl) ||
+      !browserResult.cover ||
+      !browserResult.durationSec
+    );
+
+  if (browserNeedsUpgrade && ytDlpAvailable) {
+    const ytDlpPreferred = await resolveXWithYtDlp(url);
+    if (ytDlpPreferred.ok) {
+      return {
+        ok: true,
+        ...ytDlpPreferred,
+        hints: buildXHints({
+          parserMode: "yt-dlp",
+          hasCookie: Boolean(X_COOKIE || X_COOKIE_FILE),
+          hasYtDlp: true,
+          hasDownloadUrl: Boolean(ytDlpPreferred.downloadUrl)
+        })
+      };
+    }
+  }
+
+  if (browserResult.ok) {
+    return {
+      ok: true,
+      ...browserResult,
+      hints: buildXHints({
+        parserMode: "browser",
+        hasCookie: Boolean(X_COOKIE || X_COOKIE_FILE),
+        hasYtDlp: ytDlpAvailable,
+        hasDownloadUrl: Boolean(browserResult.downloadUrl)
+      })
+    };
+  }
+
+  const ytDlpResult = await resolveXWithYtDlp(url);
+  if (ytDlpResult.ok) {
+    return {
+      ok: true,
+      ...ytDlpResult,
+      hints: buildXHints({
+        parserMode: "yt-dlp",
+        hasCookie: Boolean(X_COOKIE || X_COOKIE_FILE),
+        hasYtDlp: true,
+        hasDownloadUrl: Boolean(ytDlpResult.downloadUrl)
+      })
+    };
+  }
+
+  const hasPartialBrowserData = Boolean(
+    browserResult.title || browserResult.author || browserResult.text || browserResult.cover
+  );
+  if (hasPartialBrowserData) {
+    return {
+      ok: true,
+      parserMode: browserResult.parserMode,
+      statusId: browserResult.statusId || extractXStatusId(browserResult.finalUrl || url),
+      finalUrl: browserResult.finalUrl || url,
+      title: browserResult.title || "",
+      author: browserResult.author || "",
+      text: browserResult.text || "",
+      cover: browserResult.cover || "",
+      durationSec: 0,
+      formats: [],
+      downloadUrl: "",
+      requiresAuth: Boolean(browserResult.requiresAuth || ytDlpResult.requiresAuth),
+      hints: buildXHints({
+        parserMode: browserResult.parserMode,
+        hasCookie: Boolean(X_COOKIE || X_COOKIE_FILE),
+        hasYtDlp: ytDlpAvailable,
+        hasDownloadUrl: false
+      })
+    };
+  }
+
+  const error = new Error(ytDlpResult.error || browserResult.error || "X 视频解析失败。");
+  error.meta = {
+    browser: browserResult,
+    ytDlp: ytDlpResult,
+    requiresAuth: Boolean(browserResult.requiresAuth || ytDlpResult.requiresAuth)
+  };
+  throw error;
 }
 
 function runCommand(command, args) {
@@ -717,18 +1164,39 @@ app.post("/api/transcribe", async (req, res) => {
   }
 });
 
+app.post("/api/x/parse", async (req, res) => {
+  const { input } = req.body || {};
+  if (!input || typeof input !== "string") {
+    return res.status(400).json({ ok: false, error: "请输入 X 视频链接。" });
+  }
+
+  try {
+    const result = await prepareXVideoFromRequest(input);
+    return res.json(result);
+  } catch (error) {
+    return res.status(500).json({
+      ok: false,
+      error: error.message || "X 视频解析失败。",
+      meta: error.meta || null
+    });
+  }
+});
+
 app.get("/api/health", (_req, res) => {
   res.json({ ok: true });
 });
 
-app.get("/api/config-status", (_req, res) => {
+app.get("/api/config-status", async (_req, res) => {
   res.json({
     ok: true,
     hasXhsCookie: Boolean(XHS_COOKIE),
+    hasXCookie: Boolean(X_COOKIE || X_COOKIE_FILE),
     hasChrome: hasBrowserSupport(),
     hasLocalWhisper: fs.existsSync(PYTHON_BIN),
+    hasYtDlp: await hasYtDlpSupport(),
     localPythonPath: PYTHON_BIN,
     chromeExecutablePath: CHROME_EXECUTABLE_PATH,
+    ytDlpBin: YT_DLP_BIN,
     transcribeModel: TRANSCRIBE_MODEL,
     modelOptions: MODEL_OPTIONS
   });

@@ -3,67 +3,116 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>小红书链接转文字 MVP</title>
+    <title>小红书视频转文字 / X 视频下载</title>
     <link rel="stylesheet" href="/styles.css" />
   </head>
   <body>
     <main class="page">
       <section class="hero">
-        <p class="eyebrow">Xiaohongshu Parser MVP</p>
+        <p class="eyebrow">Video Toolkit</p>
         <h1>小红书视频转文字</h1>
       </section>
 
-      <section class="panel">
-        <div class="panel-head">
-          <label class="label" for="input">分享文案或链接</label>
-          <div class="model-inline">
-            <select id="modelPreset" aria-label="转写速度档位">
-              <option value="tiny">极速 · tiny</option>
-              <option value="base">均衡 · base</option>
-              <option value="small">更准 · small</option>
-            </select>
+      <nav class="tabs" aria-label="功能切换">
+        <button id="tabXhs" class="tab active" type="button">小红书转文字</button>
+        <button id="tabX" class="tab" type="button">X 视频下载</button>
+      </nav>
+
+      <section id="xhsView" class="tab-view">
+        <section class="panel">
+          <div class="panel-head">
+            <label class="label" for="input">分享文案或链接</label>
+            <div class="model-inline">
+              <select id="modelPreset" aria-label="转写速度档位">
+                <option value="tiny">极速 · tiny</option>
+                <option value="base">均衡 · base</option>
+                <option value="small">更准 · small</option>
+              </select>
+            </div>
           </div>
-        </div>
-        <textarea
-          id="input"
-          placeholder="例如：54 小明发布了一篇小红书笔记，快来看吧！ 😆 3PqAbCdEfGh 😆 https://xhslink.com/xxxxx，复制本条信息，打开【小红书】App查看精彩内容！"
-        ></textarea>
-        <p id="modelHint" class="helper top-gap">默认读取当前服务配置。</p>
-        <div class="actions">
-          <button id="runAll">一键解析并转文字</button>
-        </div>
-        <p id="status" class="status"></p>
+          <textarea
+            id="input"
+            placeholder="例如：54 小明发布了一篇小红书笔记，快来看吧！ 😆 3PqAbCdEfGh 😆 https://xhslink.com/xxxxx，复制本条信息，打开【小红书】App查看精彩内容！"
+          ></textarea>
+          <p id="modelHint" class="helper top-gap">默认读取当前服务配置。</p>
+          <div class="actions">
+            <button id="runAll">一键解析并转文字</button>
+          </div>
+          <p id="status" class="status"></p>
+        </section>
+
+        <section id="result" class="result hidden">
+          <div class="result-head">
+            <h2>解析结果</h2>
+            <button id="retryParse" class="ghost small hidden" type="button">再次解析</button>
+          </div>
+          <div class="meta">
+            <div class="meta-row"><span>标题</span><strong id="title">-</strong></div>
+            <div class="meta-row"><span>作者</span><strong id="author">-</strong></div>
+          </div>
+          <div class="text-block">
+            <h3>正文片段</h3>
+            <pre id="noteText"></pre>
+          </div>
+        </section>
+
+        <section id="transcriptCard" class="result hidden">
+          <div class="result-head">
+            <h2>转写结果</h2>
+          </div>
+          <div class="meta">
+            <div class="meta-row"><span>音频时长</span><strong id="audioDuration">-</strong></div>
+          </div>
+          <div class="text-block">
+            <div class="text-head">
+              <h3>文字稿</h3>
+              <button id="copyTranscript" class="ghost small" type="button">复制文字稿</button>
+            </div>
+            <pre id="transcriptText"></pre>
+          </div>
+        </section>
       </section>
 
-      <section id="result" class="result hidden">
-        <div class="result-head">
-          <h2>解析结果</h2>
-          <button id="retryParse" class="ghost small hidden" type="button">再次解析</button>
-        </div>
-        <div class="meta">
-          <div class="meta-row"><span>标题</span><strong id="title">-</strong></div>
-          <div class="meta-row"><span>作者</span><strong id="author">-</strong></div>
-        </div>
-        <div class="text-block">
-          <h3>正文片段</h3>
-          <pre id="noteText"></pre>
-        </div>
-      </section>
-
-      <section id="transcriptCard" class="result hidden">
-        <div class="result-head">
-          <h2>转写结果</h2>
-        </div>
-        <div class="meta">
-          <div class="meta-row"><span>音频时长</span><strong id="audioDuration">-</strong></div>
-        </div>
-        <div class="text-block">
-          <div class="text-head">
-            <h3>文字稿</h3>
-            <button id="copyTranscript" class="ghost small" type="button">复制文字稿</button>
+      <section id="xView" class="tab-view hidden">
+        <section class="panel">
+          <div class="panel-head">
+            <label class="label" for="xInput">X 视频链接</label>
           </div>
-          <pre id="transcriptText"></pre>
-        </div>
+          <textarea
+            id="xInput"
+            class="compact-textarea"
+            placeholder="例如：https://x.com/username/status/1234567890"
+          ></textarea>
+          <div class="actions">
+            <button id="runXParse">解析 X 视频</button>
+          </div>
+          <p id="xStatus" class="status"></p>
+        </section>
+
+        <section id="xResult" class="result hidden">
+          <div class="result-head">
+            <h2>X 解析结果</h2>
+          </div>
+          <div class="x-layout">
+            <div class="x-cover-wrap hidden" id="xCoverWrap">
+              <img id="xCover" alt="X 视频封面" />
+            </div>
+            <div class="x-meta">
+              <div class="meta-row"><span>作者</span><strong id="xAuthor">-</strong></div>
+              <div class="meta-row"><span>文案</span><strong id="xText">-</strong></div>
+              <div class="meta-row"><span>视频时长</span><strong id="xDuration">-</strong></div>
+              <div class="meta-row"><span>清晰度 / 格式</span><strong id="xFormats">-</strong></div>
+              <div class="meta-row"><span>解析方式</span><strong id="xParserMode">-</strong></div>
+            </div>
+          </div>
+          <div class="actions top-gap">
+            <a id="xDownloadButton" class="download-button hidden" target="_blank" rel="noreferrer">下载视频</a>
+          </div>
+          <div class="text-block">
+            <h3>提示</h3>
+            <pre id="xHints"></pre>
+          </div>
+        </section>
       </section>
     </main>
 

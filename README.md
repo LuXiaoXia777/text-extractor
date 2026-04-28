@@ -1,11 +1,13 @@
-# 小红书视频转文字
+# 小红书视频转文字 / X 视频下载
 
-一个本地运行的小红书视频转文字网站：
+一个本地运行的多功能视频工具网站：
 
 - 输入小红书分享文案或链接
 - 自动解析视频
 - 自动抽音频
 - 使用本地 `faster-whisper` 转文字
+- 输入 X 视频链接
+- 解析作者、文案、封面和下载地址
 
 ## 运行环境
 
@@ -15,6 +17,7 @@
 2. Python 3
 3. `ffmpeg`
 4. Google Chrome
+5. `yt-dlp`（X 视频下载兜底解析会用到）
 
 ## 1. 克隆项目
 
@@ -58,6 +61,20 @@ brew install ffmpeg
 ffmpeg -version
 ```
 
+## 4.1 安装 yt-dlp
+
+如果你是 macOS，通常可以用 Homebrew：
+
+```bash
+brew install yt-dlp
+```
+
+安装完成后可以检查：
+
+```bash
+yt-dlp --version
+```
+
 ## 5. 配置 `.env`
 
 先复制模板：
@@ -72,6 +89,9 @@ cp .env.example .env
 
 ```env
 XHS_COOKIE=
+X_COOKIE=
+X_COOKIE_FILE=
+YT_DLP_BIN=yt-dlp
 FASTER_WHISPER_MODEL=base
 FASTER_WHISPER_DEVICE=cpu
 FASTER_WHISPER_COMPUTE_TYPE=int8
@@ -85,6 +105,7 @@ PORT=3000
 - `FASTER_WHISPER_PYTHON` 必须改成你当前电脑上的实际项目路径
 - 如果是 macOS，默认 Chrome 路径通常就是：
   `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`
+- 如果你要使用 X 视频下载的登录态兜底，优先推荐配置 `X_COOKIE_FILE`
 
 ## 6. 如何获取 `XHS_COOKIE`
 
@@ -118,6 +139,33 @@ XHS_COOKIE=这里粘贴整段cookie
 - 不要把 Cookie 发给别人
 - Cookie 过期后需要重新复制
 
+## 6.1 X 登录态配置
+
+X 视频下载第一版支持公开内容，也预留了登录态配置。
+
+推荐两种方式：
+
+### 方式 A：使用 Cookie 文件
+
+```env
+X_COOKIE_FILE=/你的本地路径/x-cookies.txt
+```
+
+这个方式更适合 `yt-dlp`。
+
+### 方式 B：直接填 Cookie 字符串
+
+```env
+X_COOKIE=auth_token=...; ct0=...; ...
+```
+
+这个方式更适合浏览器抓取。
+
+注意：
+
+- 第一版不承诺覆盖私密或强风控内容
+- 未配置 X 登录态时，公开视频通常仍可解析
+
 ## 7. 启动项目
 
 ```bash
@@ -144,8 +192,10 @@ http://localhost:3000/api/config-status
 {
   "ok": true,
   "hasXhsCookie": true,
+  "hasXCookie": false,
   "hasChrome": true,
   "hasLocalWhisper": true,
+  "hasYtDlp": true,
   "transcribeModel": "base"
 }
 ```
@@ -183,7 +233,16 @@ FASTER_WHISPER_MODEL=base
 - Cookie 是否过期
 - 小红书是否需要重新登录
 
-### 3. 第一次转写很慢
+### 3. X 视频解析失败
+
+通常检查：
+
+- `yt-dlp` 是否安装成功
+- `X_COOKIE` 或 `X_COOKIE_FILE` 是否配置
+- 链接是否是公开视频
+- X 是否要求登录
+
+### 4. 第一次转写很慢
 
 这是正常的。
 
