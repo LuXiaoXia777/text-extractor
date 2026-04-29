@@ -182,6 +182,36 @@ function unique(values) {
   return [...new Set(values.filter(Boolean))];
 }
 
+function parseCookieHeader(cookieHeader) {
+  return String(cookieHeader || "")
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean)
+    .map((part) => {
+      const separatorIndex = part.indexOf("=");
+      if (separatorIndex === -1) return null;
+      const name = part.slice(0, separatorIndex).trim();
+      const value = part.slice(separatorIndex + 1).trim();
+      if (!name || !value) return null;
+      return { name, value };
+    })
+    .filter(Boolean);
+}
+
+async function setCookiesFromHeader(page, cookieHeader, domain) {
+  const cookies = parseCookieHeader(cookieHeader).map(({ name, value }) => ({
+    name,
+    value,
+    domain,
+    path: "/",
+    secure: true,
+    httpOnly: false
+  }));
+
+  if (!cookies.length) return;
+  await page.setCookie(...cookies);
+}
+
 function sleep(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
@@ -1893,6 +1923,7 @@ async function resolveCreatorPage(url) {
       Object.defineProperty(navigator, "languages", { get: () => ["zh-CN", "zh", "en"] });
       window.chrome = { runtime: {} };
     });
+    await setCookiesFromHeader(page, XHS_COOKIE, ".xiaohongshu.com");
 
     // 拦截并捕获小红书接口响应
     const captured = { userInfo: null, notes: [] };
@@ -1943,6 +1974,68 @@ async function resolveCreatorPage(url) {
       }
     }
     await sleep(4000);
+    const finalPageUrl = page.url();
+    const domCreatorInfo = await page.evaluate(() => {
+      function parseCount(text) {
+        if (!text) return null;
+        const t = text.replace(/,/g, "").trim();
+        const m = t.match(/(\d+(?:\.\d+)?)(万|w|W)?/);
+        if (!m) return null;
+        const base = Number(m[1]);
+        if (!Number.isFinite(base)) return null;
+        if (m[2] === "万" || m[2] === "w" || m[2] === "W") return Math.round(base * 10000);
+        return Math.round(base);
+      }
+
+      function extractNearNumber(text, keyword) {
+        const patterns = [
+          new RegExp(`([\\d.,]+(?:万|w|W)?)\\s*${keyword}`),
+          new RegExp(`${keyword}\\s*([\\d.,]+(?:万|w|W)?)`)
+        ];
+        for (const pattern of patterns) {
+          const match = text.match(pattern);
+          if (match) return match[1];
+        }
+        return null;
+      }
+
+      function queryText(selectors) {
+        for (const selector of selectors) {
+          const el = document.querySelector(selector);
+          if (el?.textContent?.trim()) return el.textContent.trim();
+        }
+        return "";
+      }
+
+      function queryAttr(selectors, attr) {
+        for (const selector of selectors) {
+          const el = document.querySelector(selector);
+          if (el?.getAttribute(attr)) return el.getAttribute(attr);
+        }
+        return "";
+      }
+
+      const bodyText = (document.body?.innerText || "").replace(/\s+/g, " ");
+      return {
+        nickname: queryText([
+          ".user-name", ".username", "[class*='user-name']", "[class*='username']",
+          "[class*='nickname']", "h1", ".info-nickname"
+        ]),
+        avatar: queryAttr([
+          "img.avatar", "img[class*='avatar']", ".user-avatar img", "[class*='user'] img:first-child"
+        ], "src"),
+        fans: parseCount(extractNearNumber(bodyText, "粉丝")),
+        likeCollect: parseCount(
+          extractNearNumber(bodyText, "获赞与收藏") ||
+          extractNearNumber(bodyText, "获赞和收藏") ||
+          extractNearNumber(bodyText, "获赞")
+        ),
+        noteCount: parseCount(
+          extractNearNumber(bodyText, "笔记") ||
+          extractNearNumber(bodyText, "作品")
+        )
+      };
+    });
 
     // 尝试从拦截的接口数据构建结果
     if (captured.userInfo || captured.notes.length > 0) {
@@ -1986,15 +2079,19 @@ async function resolveCreatorPage(url) {
         ok: true,
         source: "api",
         creator: {
-          nickname: simplifyChineseText(cleanText(basic.nickname || basic.name || "")),
-          avatar: basic.images || basic.avatar || "",
-          fans: parseApiCount(fansObj?.count),
-          totalLikeAndCollect: parseApiCount(likeObj?.count),
-          noteCount: parseApiCount(captured.userInfo?.tab_public?.collection_count ?? null)
+          nickname: simplifyChineseText(cleanText(basic.nickname || basic.name || domCreatorInfo.nickname || "")),
+          avatar: basic.images || basic.avatar || domCreatorInfo.avatar || "",
+          fans: parseApiCount(fansObj?.count) ?? domCreatorInfo.fans,
+          totalLikeAndCollect: parseApiCount(likeObj?.count) ?? domCreatorInfo.likeCollect,
+          noteCount: parseApiCount(captured.userInfo?.tab_public?.collection_count ?? null) ?? domCreatorInfo.noteCount
         },
         notes,
         analysis: { contentTypeDistribution, formulaDistribution }
       };
+    }
+
+    if (/\/login\b/i.test(finalPageUrl)) {
+      throw new Error("当前打开的是小红书登录页，说明 XHS_COOKIE 没有生效或已经过期，请在 Chrome 里重新登录小红书后更新 .env 里的 XHS_COOKIE。");
     }
 
     // fallback：DOM 解析
@@ -2122,6 +2219,11 @@ async function resolveCreatorPage(url) {
       }
       const fk = String(note.formula.formulaId);
       formulaDistribution[fk] = (formulaDistribution[fk] || 0) + 1;
+    }
+
+    const hasCreatorIdentity = Boolean(data.nickname || data.avatar || data.fans || data.likeCollect || data.noteCount);
+    if (!notes.length && !hasCreatorIdentity) {
+      throw new Error("没有抓到博主主页数据，通常是因为小红书要求登录或页面结构发生变化。请先更新 XHS_COOKIE 后再试。");
     }
 
     return {
