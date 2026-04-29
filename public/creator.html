@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>博主数据分析</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
+    <main class="page">
+      <section class="hero">
+        <p class="eyebrow">Video Toolkit</p>
+        <div class="hero-layout">
+          <div class="hero-copy">
+            <h1>博主数据分析</h1>
+          </div>
+          <nav class="tool-nav" aria-label="工具导航">
+            <a href="/" class="tool-nav-btn">小红书转文字</a>
+            <a href="/creator.html" class="tool-nav-btn active">博主数据</a>
+            <a href="/titles.html" class="tool-nav-btn">爆款标题库</a>
+          </nav>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="panel-head">
+          <label class="label" for="creatorInput">博主主页链接</label>
+        </div>
+        <input
+          type="text"
+          id="creatorInput"
+          class="text-input"
+          placeholder="例如：https://www.xiaohongshu.com/user/profile/..."
+        />
+        <div class="actions">
+          <button id="runCreatorAnalysis">分析博主</button>
+          <button id="refreshCreatorAnalysis" class="ghost hidden" type="button">刷新</button>
+        </div>
+        <p id="creatorStatus" class="status"></p>
+      </section>
+
+      <section id="creatorResult" class="result hidden">
+        <div class="creator-card" id="creatorCard">
+          <div class="creator-avatar-wrap">
+            <img id="creatorAvatar" alt="博主头像" />
+          </div>
+          <div class="creator-info">
+            <h2 id="creatorNickname">-</h2>
+            <div class="creator-metrics">
+              <div class="metric-chip"><span>粉丝</span><strong id="creatorFans">-</strong></div>
+              <div class="metric-chip"><span>获赞与收藏</span><strong id="creatorLikeCollect">-</strong></div>
+              <div class="metric-chip"><span>笔记数</span><strong id="creatorNoteCount">-</strong></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="analytics-grid creator-analytics-grid">
+          <section class="analytics-block">
+            <h3>内容类型分布</h3>
+            <div id="creatorContentTypeDist" class="dist-chart"></div>
+          </section>
+          <section class="analytics-block">
+            <h3>标题公式分布</h3>
+            <div id="creatorFormulaDist" class="dist-chart"></div>
+          </section>
+        </div>
+
+        <section class="analytics-block top-gap">
+          <h3>近期笔记（前12条）</h3>
+          <div id="creatorNoteList" class="note-grid"></div>
+        </section>
+      </section>
+    </main>
+
+    <script src="/creator.js"></script>
+  </body>
+</html>
