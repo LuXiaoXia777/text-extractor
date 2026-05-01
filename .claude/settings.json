@@ -1,0 +1,29 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(gh repo *)",
+      "Bash(git -C /Users/xiaoxialu/Desktop/video_to_text-main init)",
+      "Bash(git -C /Users/xiaoxialu/Desktop/video_to_text-main remote add origin https://github.com/LuXiaoXia777/video_to_text.git)",
+      "Bash(git -C /Users/xiaoxialu/Desktop/video_to_text-main fetch origin)",
+      "Bash(git -C /Users/xiaoxialu/Desktop/video_to_text-main log --oneline origin/main)",
+      "Bash(git -C /Users/xiaoxialu/Desktop/video_to_text-main diff --stat origin/main)",
+      "Bash(git -C /Users/xiaoxialu/Desktop/video_to_text-main checkout -b main --track origin/main)",
+      "Bash(git -C /Users/xiaoxialu/Desktop/video_to_text-main add -A)",
+      "Bash(git -C /Users/xiaoxialu/Desktop/video_to_text-main diff --stat origin/main HEAD)",
+      "Bash(git checkout *)",
+      "Bash(git -C /Users/xiaoxialu/Desktop/video_to_text-main log --oneline -5)",
+      "Read(//Applications/Google Chrome.app/**)",
+      "Read(//Library/Frameworks/Python.framework/**)",
+      "Bash(python3 -c \"import faster_whisper; print\\('ok'\\)\")",
+      "Bash(python3 -m venv .venv)",
+      "Bash(/Users/xiaoxialu/Desktop/video_to_text-main/.venv/bin/pip install *)",
+      "Bash(cp /Users/xiaoxialu/Desktop/video_to_text-main/.env.example /Users/xiaoxialu/Desktop/video_to_text-main/.env)",
+      "Bash(sed -i '' 's|FASTER_WHISPER_PYTHON=.*|FASTER_WHISPER_PYTHON=|' /Users/xiaoxialu/Desktop/video_to_text-main/.env)",
+      "Bash(/Users/xiaoxialu/Desktop/video_to_text-main/.venv/bin/python -c \"import faster_whisper; print\\('faster-whisper OK'\\)\")",
+      "Bash(npm start *)",
+      "Bash(echo \"PID: $!\")",
+      "Bash(curl -s http://localhost:3000/api/health)",
+      "Read(//private/tmp/**)"
+    ]
+  }
+}
