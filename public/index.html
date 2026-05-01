@@ -4,73 +4,184 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>小红书视频转文字 / X 视频下载</title>
-    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
+    <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
     <main class="page">
-      <section class="hero">
+      <section class="hero hero--home">
         <p class="eyebrow">Video Toolkit</p>
-        <h1>小红书视频转文字</h1>
+        <div class="hero-layout">
+          <div class="hero-copy">
+            <h1 id="pageTitle">小红书视频转文字</h1>
+            <nav class="tabs tabs--hero" id="topTabNav" aria-label="功能切换">
+              <button id="tabXhs" class="tab active" type="button">小红书转文字</button>
+              <button id="tabX" class="tab" type="button">X 视频下载</button>
+            </nav>
+          </div>
+          <nav class="tool-nav tool-nav--hero" aria-label="工具导航">
+            <a href="/creator.html" class="tool-nav-btn">博主数据</a>
+            <a href="/titles.html" class="tool-nav-btn">爆款标题库</a>
+          </nav>
+        </div>
       </section>
 
-      <nav class="tabs" aria-label="功能切换">
-        <button id="tabXhs" class="tab active" type="button">小红书转文字</button>
-        <button id="tabX" class="tab" type="button">X 视频下载</button>
-      </nav>
-
       <section id="xhsView" class="tab-view">
-        <section class="panel">
-          <div class="panel-head">
-            <label class="label" for="input">分享文案或链接</label>
-            <div class="model-inline">
-              <select id="modelPreset" aria-label="转写速度档位">
-                <option value="tiny">极速 · tiny</option>
-                <option value="base">均衡 · base</option>
-                <option value="small">更准 · small</option>
-              </select>
-            </div>
-          </div>
-          <textarea
-            id="input"
-            placeholder="例如：54 小明发布了一篇小红书笔记，快来看吧！ 😆 3PqAbCdEfGh 😆 https://xhslink.com/xxxxx，复制本条信息，打开【小红书】App查看精彩内容！"
-          ></textarea>
-          <p id="modelHint" class="helper top-gap">默认读取当前服务配置。</p>
-          <div class="actions">
-            <button id="runAll">一键解析并转文字</button>
-          </div>
-          <p id="status" class="status"></p>
-        </section>
+        <div class="workspace workspace--home">
+          <aside class="workspace-input">
+            <section class="panel">
+              <div class="panel-head">
+                <label class="label" for="input">分享文案或链接</label>
+                <div class="model-inline">
+                  <select id="modelPreset" aria-label="转写速度档位">
+                    <option value="tiny">极速 · tiny</option>
+                    <option value="base">均衡 · base</option>
+                    <option value="small">更准 · small</option>
+                  </select>
+                </div>
+              </div>
+              <textarea
+                id="input"
+                placeholder="例如：54 小明发布了一篇小红书笔记，快来看吧！ 😆 3PqAbCdEfGh 😆 https://xhslink.com/xxxxx，复制本条信息，打开【小红书】App查看精彩内容！"
+              ></textarea>
+              <p id="modelHint" class="helper top-gap">默认读取当前服务配置。</p>
+              <div class="actions">
+                <button id="runAll">一键解析并转文字</button>
+              </div>
+              <p id="status" class="status"></p>
+            </section>
+          </aside>
 
-        <section id="result" class="result hidden">
-          <div class="result-head">
-            <h2>解析结果</h2>
-            <button id="retryParse" class="ghost small hidden" type="button">再次解析</button>
-          </div>
-          <div class="meta">
-            <div class="meta-row"><span>标题</span><strong id="title">-</strong></div>
-            <div class="meta-row"><span>作者</span><strong id="author">-</strong></div>
-          </div>
-          <div class="text-block">
-            <h3>正文片段</h3>
-            <pre id="noteText"></pre>
-          </div>
-        </section>
+          <div class="workspace-main">
+            <section id="result" class="result hidden">
+              <div class="result-head">
+                <h2>解析结果</h2>
+                <button id="retryParse" class="ghost small hidden" type="button">再次解析</button>
+              </div>
+              <div class="meta">
+                <div class="meta-row"><span>标题</span><strong id="title">-</strong></div>
+                <div class="meta-row"><span>作者</span><strong id="author">-</strong></div>
+              </div>
+              <div class="text-block">
+                <h3>正文片段</h3>
+                <pre id="noteText"></pre>
+              </div>
+            </section>
 
-        <section id="transcriptCard" class="result hidden">
-          <div class="result-head">
-            <h2>转写结果</h2>
+            <section id="transcriptCard" class="result hidden">
+              <div class="result-head">
+                <h2>转写结果</h2>
+                <button id="showAnalytics" class="ghost small hidden" type="button">数据详情</button>
+              </div>
+              <div class="meta">
+                <div class="meta-row"><span>音频时长</span><strong id="audioDuration">-</strong></div>
+              </div>
+              <div class="text-block">
+                <div class="text-head">
+                  <h3>文字稿</h3>
+                  <button id="copyTranscript" class="ghost small" type="button">复制文字稿</button>
+                </div>
+                <pre id="transcriptText"></pre>
+              </div>
+            </section>
+
+            <section id="historyDetailCard" class="result hidden">
+              <div class="result-head">
+                <h2>历史详情</h2>
+                <div class="inline-actions">
+                  <a id="historyDetailLink" class="ghost-link hidden" target="_blank" rel="noreferrer">打开原链接</a>
+                  <button id="showHistoryAnalytics" class="ghost small" type="button">数据详情</button>
+                  <button id="copyHistoryDetail" class="ghost small" type="button">复制文字稿</button>
+                  <button id="deleteHistoryDetail" class="ghost small" type="button">删除</button>
+                </div>
+              </div>
+              <div class="meta">
+                <div class="meta-row"><span>标题</span><strong id="historyDetailTitle">-</strong></div>
+                <div class="meta-row"><span>保存时间</span><strong id="historyDetailTime">-</strong></div>
+                <div class="meta-row"><span>音频时长</span><strong id="historyDetailDuration">-</strong></div>
+                <div class="meta-row"><span>模型</span><strong id="historyDetailModel">-</strong></div>
+              </div>
+              <div class="text-block">
+                <h3>文字稿</h3>
+                <pre id="historyDetailTranscript"></pre>
+              </div>
+            </section>
+
+            <section id="analyticsCard" class="result hidden">
+              <div class="result-head">
+                <h2>小红书笔记数据分析</h2>
+              </div>
+              <div class="analytics-grid">
+                <section class="analytics-block">
+                  <h3>基础数据</h3>
+                  <div class="analytics-metrics">
+                    <div class="metric-chip"><span>点赞</span><strong id="analyticsLikeCount">-</strong></div>
+                    <div class="metric-chip"><span>收藏</span><strong id="analyticsCollectCount">-</strong></div>
+                    <div class="metric-chip"><span>评论</span><strong id="analyticsCommentCount">-</strong></div>
+                    <div class="metric-chip"><span>分享</span><strong id="analyticsShareCount">-</strong></div>
+                    <div class="metric-chip"><span>浏览/曝光</span><strong id="analyticsViewCount">-</strong></div>
+                  </div>
+                </section>
+
+                <section class="analytics-block">
+                  <h3>指标分析</h3>
+                  <div class="meta analytics-meta">
+                    <div class="meta-row"><span>互动总量</span><strong id="analyticsEngagementCount">-</strong></div>
+                    <div class="meta-row"><span>互动率</span><strong id="analyticsEngagementRate">-</strong></div>
+                    <div class="meta-row"><span>赞藏比</span><strong id="analyticsCollectLikeRatio">-</strong></div>
+                    <div class="meta-row"><span>赞评比</span><strong id="analyticsCommentLikeRatio">-</strong></div>
+                  </div>
+                </section>
+
+                <section class="analytics-block">
+                  <h3>内容诊断</h3>
+                  <div class="analytics-tags" id="analyticsContentTypes"></div>
+                  <div class="analytics-copy">
+                    <p id="analyticsTitleInsights"></p>
+                    <p id="analyticsCollectPotential"></p>
+                    <p id="analyticsCommentPotential"></p>
+                    <p id="analyticsConversionPotential"></p>
+                  </div>
+                </section>
+
+                <section class="analytics-block">
+                  <h3>评论洞察</h3>
+                  <p class="analytics-note" id="analyticsCommentInsight"></p>
+                  <pre id="analyticsCommentSamples"></pre>
+                </section>
+              </div>
+              <div class="analytics-block top-gap">
+                <h3>总结</h3>
+                <ul id="analyticsSummary"></ul>
+              </div>
+              <div class="analytics-block top-gap">
+                <h3>优化建议</h3>
+                <ul id="analyticsSuggestions"></ul>
+              </div>
+              <div class="analytics-block top-gap">
+                <h3>限制说明</h3>
+                <ul id="analyticsLimitations"></ul>
+              </div>
+            </section>
           </div>
-          <div class="meta">
-            <div class="meta-row"><span>音频时长</span><strong id="audioDuration">-</strong></div>
-          </div>
-          <div class="text-block">
-            <div class="text-head">
-              <h3>文字稿</h3>
-              <button id="copyTranscript" class="ghost small" type="button">复制文字稿</button>
-            </div>
-            <pre id="transcriptText"></pre>
-          </div>
-        </section>
+
+          <aside class="history-sidebar">
+            <section id="historyCard" class="history-card">
+              <div class="history-sidebar-head">
+                <div>
+                  <p class="history-kicker">History</p>
+                  <h2>历史记录</h2>
+                </div>
+                <div class="inline-actions">
+                  <button id="refreshHistory" class="ghost small" type="button">刷新</button>
+                  <button id="clearHistory" class="ghost small" type="button">清空全部</button>
+                </div>
+              </div>
+              <p class="helper">历史记录保存在当前项目目录的服务端本地文件里，不会占用很多内存。</p>
+              <div id="historyList" class="history-list top-gap"></div>
+            </section>
+          </aside>
+        </div>
       </section>
 
       <section id="xView" class="tab-view hidden">

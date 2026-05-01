@@ -23,7 +23,13 @@
       "Bash(npm start *)",
       "Bash(echo \"PID: $!\")",
       "Bash(curl -s http://localhost:3000/api/health)",
-      "Read(//private/tmp/**)"
+      "Read(//private/tmp/**)",
+      "Bash(curl -s http://localhost:3000/api/history)",
+      "Bash(curl -s -X POST http://localhost:3000/api/xhs/analyze -H 'Content-Type: application/json' -d '{\"title\":\"test\"}')",
+      "Bash(git add *)",
+      "Bash(git pull *)",
+      "Bash(git stash *)",
+      "Bash(git commit -m ' *)"
     ]
   }
 }
