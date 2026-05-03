@@ -2,6 +2,30 @@
 
 let toastTimer = null;
 const toastEl = document.getElementById("toast");
+const networkBanner = document.getElementById("networkBanner");
+
+function fetchWithTimeout(url, options = {}, timeoutMs = 30000) {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), timeoutMs);
+  return fetch(url, { ...options, signal: controller.signal })
+    .then((res) => { clearTimeout(timer); return res; })
+    .catch((err) => {
+      clearTimeout(timer);
+      if (err.name === "AbortError") {
+        const secs = Math.round(timeoutMs / 1000);
+        const label = secs >= 60 ? `${Math.round(secs / 60)} 分钟` : `${secs} 秒`;
+        throw new Error(`请求超时（超过 ${label}），请检查网络后重试`);
+      }
+      throw err;
+    });
+}
+
+function initNetworkStatus() {
+  function update() { networkBanner.classList.toggle("hidden", navigator.onLine); }
+  window.addEventListener("offline", () => { update(); showToast("网络已断开，请检查连接", true); });
+  window.addEventListener("online",  () => { update(); showToast("网络已恢复"); });
+  update();
+}
 
 function showToast(message, isError = false) {
   window.clearTimeout(toastTimer);
@@ -134,7 +158,7 @@ function renderTitleTable() {
 
 async function loadTitleLibrary() {
   try {
-    const response = await fetch("/api/titles");
+    const response = await fetchWithTimeout("/api/titles", {}, 15000);
     let data;
     try { data = await response.json(); } catch (_e) { throw new Error("加载失败"); }
     if (!response.ok || !data.ok) throw new Error(data.error || "加载标题库失败");
@@ -153,7 +177,7 @@ async function syncTitlesFromHistory() {
   titlesStatusEl.textContent = "正在同步...";
   titlesStatusEl.classList.remove("error");
   try {
-    const response = await fetch("/api/titles/sync", { method: "POST" });
+    const response = await fetchWithTimeout("/api/titles/sync", { method: "POST" }, 60000);
     let data;
     try { data = await response.json(); } catch (_e) { throw new Error("同步失败，服务器返回了异常响应。"); }
     if (!response.ok || !data.ok) throw new Error(data.error || "同步失败");
@@ -181,3 +205,4 @@ formulaNavEl.addEventListener("click", (event) => {
 
 // ── 初始化 ──
 loadTitleLibrary();
+initNetworkStatus();

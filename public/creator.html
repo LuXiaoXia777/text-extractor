@@ -8,21 +8,17 @@
   </head>
   <body>
     <div id="toast" class="toast hidden" role="status" aria-live="polite"></div>
-    <main class="page">
-      <section class="hero">
-        <p class="eyebrow">Video Toolkit</p>
-        <div class="hero-layout">
-          <div class="hero-copy">
-            <h1>博主数据分析</h1>
-          </div>
-          <nav class="tool-nav" aria-label="工具导航">
-            <a href="/" class="tool-nav-btn">小红书转文字</a>
-            <a href="/creator.html" class="tool-nav-btn active">博主数据</a>
-            <a href="/titles.html" class="tool-nav-btn">爆款标题库</a>
-          </nav>
-        </div>
-      </section>
+    <div id="networkBanner" class="network-banner hidden" role="alert" aria-live="assertive">无网络连接，请检查网络后重试</div>
 
+    <nav class="page-tabs" aria-label="功能导航">
+      <a href="/" class="page-tab">视频转文字</a>
+      <a href="/creator.html" class="page-tab active">博主数据</a>
+      <a href="/titles.html" class="page-tab">标题数据库</a>
+    </nav>
+
+    <main class="page">
+
+      <div class="creator-input-wrap">
       <section class="panel">
         <div class="panel-head">
           <label class="label" for="creatorInput">博主主页链接</label>
@@ -39,6 +35,7 @@
         </div>
         <p id="creatorStatus" class="status"></p>
       </section>
+      </div>
 
       <section id="creatorResult" class="result hidden">
         <div class="creator-card" id="creatorCard">

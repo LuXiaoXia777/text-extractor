@@ -1,258 +1,184 @@
-# 小红书视频转文字 / X 视频下载
+# 小红书视频转文字
 
-一个本地运行的多功能视频工具网站：
+本地运行的视频工具网站：输入小红书分享文案或链接，自动解析视频、抽音频、用本地 faster-whisper 转文字，并支持博主数据分析和爆款标题库。
 
-- 输入小红书分享文案或链接
-- 自动解析视频
-- 自动抽音频
-- 使用本地 `faster-whisper` 转文字
-- 输入 X 视频链接
-- 解析作者、文案、封面和下载地址
+---
 
-## 运行环境
+## 每次启动步骤
 
-换一台电脑后，不能只下载代码就直接用，还需要先安装这些依赖：
+> 日常使用时照着这里做就够了。
 
-1. Node.js 18+
-2. Python 3
-3. `ffmpeg`
-4. Google Chrome
-5. `yt-dlp`（X 视频下载兜底解析会用到）
+**第一步：拉取最新代码**
 
-## 1. 克隆项目
+```bash
+git pull origin main
+```
+
+**第二步：如果 package.json 有变动，重新安装依赖**
+
+每次 pull 完，建议都跑一下（几秒钟，有变化时会自动安装，没变化也不影响）：
+
+```bash
+npm install
+```
+
+**第三步：启动服务器**
+
+```bash
+npm start
+```
+
+看到这行说明启动成功：
+
+```
+Server running at http://localhost:3000
+```
+
+**第四步：打开浏览器**
+
+```
+http://localhost:3000
+```
+
+---
+
+## 需要定期手动处理的事
+
+### Cookie 过期（约每 1-2 周需要更新一次）
+
+小红书 Cookie 有时效性，过期后链接解析会失败。症状：能打开网站，但粘贴链接后报错。
+
+更新方法：
+
+1. 用 Chrome 打开并登录小红书：`https://www.xiaohongshu.com/`
+2. 按 `Option + Command + I` 打开开发者工具
+3. 点顶部的 `网络`（Network）
+4. 刷新页面
+5. 点任意一个发往 `xiaohongshu.com` 的请求
+6. 在右侧点 `标头`（Headers）
+7. 在「请求标头」里找到 `cookie: xxxxxx`
+8. 复制 `cookie:` 后面的整段内容
+9. 打开项目目录里的 `.env` 文件，替换 `XHS_COOKIE=` 后面的内容
+10. 保存 `.env`，重启服务器（`npm start`）
+
+---
+
+## 首次安装（换电脑或全新环境）
+
+### 1. 克隆项目
 
 ```bash
 git clone https://github.com/LuXiaoXia777/video_to_text.git
 cd video_to_text
 ```
 
-## 2. 安装前端 / Node 依赖
+### 2. 安装 Node 依赖
 
 ```bash
 npm install
 ```
 
-## 3. 创建 Python 虚拟环境并安装转写依赖
+### 3. 安装 Python 转写环境
 
 ```bash
 python3 -m venv .venv
-. .venv/bin/activate
-pip install --upgrade pip
-pip install faster-whisper
+.venv/bin/pip install --upgrade pip
+.venv/bin/pip install faster-whisper
 ```
 
-如果以后重新打开终端，还需要先激活虚拟环境：
-
-```bash
-. .venv/bin/activate
-```
-
-## 4. 安装 ffmpeg
-
-如果你是 macOS，通常可以用 Homebrew：
+### 4. 安装 ffmpeg
 
 ```bash
 brew install ffmpeg
 ```
 
-安装完成后可以检查：
+验证：
 
 ```bash
 ffmpeg -version
 ```
 
-## 4.1 安装 yt-dlp
-
-如果你是 macOS，通常可以用 Homebrew：
-
-```bash
-brew install yt-dlp
-```
-
-安装完成后可以检查：
-
-```bash
-yt-dlp --version
-```
-
-## 5. 配置 `.env`
-
-先复制模板：
+### 5. 配置 `.env`
 
 ```bash
 cp .env.example .env
 ```
 
-然后编辑 `.env`。
-
-推荐最少配置：
+用文本编辑器打开 `.env`，至少需要改这两项：
 
 ```env
-XHS_COOKIE=
-X_COOKIE=
-X_COOKIE_FILE=
-YT_DLP_BIN=yt-dlp
+XHS_COOKIE=（粘贴你的小红书 Cookie，获取方法见上方）
+FASTER_WHISPER_PYTHON=/Users/你的用户名/Desktop/video_to_text/.venv/bin/python
+```
+
+其余保持默认即可：
+
+```env
 FASTER_WHISPER_MODEL=base
 FASTER_WHISPER_DEVICE=cpu
 FASTER_WHISPER_COMPUTE_TYPE=int8
-FASTER_WHISPER_PYTHON=/你的项目路径/.venv/bin/python
 CHROME_EXECUTABLE_PATH=/Applications/Google Chrome.app/Contents/MacOS/Google Chrome
 PORT=3000
 ```
 
-注意：
-
-- `FASTER_WHISPER_PYTHON` 必须改成你当前电脑上的实际项目路径
-- 如果是 macOS，默认 Chrome 路径通常就是：
-  `/Applications/Google Chrome.app/Contents/MacOS/Google Chrome`
-- 如果你要使用 X 视频下载的登录态兜底，优先推荐配置 `X_COOKIE_FILE`
-
-## 6. 如何获取 `XHS_COOKIE`
-
-`XHS_COOKIE` 不是链接，而是你登录小红书后的浏览器 Cookie。
-
-获取方法：
-
-1. 用 Chrome 打开并登录小红书：
-   `https://www.xiaohongshu.com/`
-2. 按 `Option + Command + I` 打开开发者工具
-3. 点顶部的 `网络`
-4. 刷新页面
-5. 点任意一个发往 `xiaohongshu.com` 的请求
-6. 在右侧点 `标头`
-7. 在 `请求标头` 里找到：
-
-```text
-cookie: xxxxx
-```
-
-8. 复制 `cookie:` 后面的整段内容
-9. 粘贴到 `.env`：
-
-```env
-XHS_COOKIE=这里粘贴整段cookie
-```
-
-注意：
-
-- 不要把 `.env` 提交到 GitHub
-- 不要把 Cookie 发给别人
-- Cookie 过期后需要重新复制
-
-## 6.1 X 登录态配置
-
-X 视频下载第一版支持公开内容，也预留了登录态配置。
-
-推荐两种方式：
-
-### 方式 A：使用 Cookie 文件
-
-```env
-X_COOKIE_FILE=/你的本地路径/x-cookies.txt
-```
-
-这个方式更适合 `yt-dlp`。
-
-### 方式 B：直接填 Cookie 字符串
-
-```env
-X_COOKIE=auth_token=...; ct0=...; ...
-```
-
-这个方式更适合浏览器抓取。
-
-注意：
-
-- 第一版不承诺覆盖私密或强风控内容
-- 未配置 X 登录态时，公开视频通常仍可解析
-
-## 7. 启动项目
+### 6. 启动
 
 ```bash
-npm run dev
+npm start
 ```
 
-启动后访问：
+访问 `http://localhost:3000`，确认页面能打开。
 
-```bash
-http://localhost:3000
+---
+
+## 检查配置是否正常
+
+访问：
+
 ```
-
-## 8. 检查配置是否生效
-
-打开：
-
-```bash
 http://localhost:3000/api/config-status
 ```
 
-如果配置正常，你会看到类似：
+正常时会看到：
 
 ```json
 {
   "ok": true,
   "hasXhsCookie": true,
-  "hasXCookie": false,
   "hasChrome": true,
   "hasLocalWhisper": true,
-  "hasYtDlp": true,
   "transcribeModel": "base"
 }
 ```
 
-## 9. 常用模型档位
+- `hasXhsCookie: true` — Cookie 已配置
+- `hasChrome: true` — Chrome 找得到
+- `hasLocalWhisper: true` — Python 路径正确，faster-whisper 可用
 
-你可以在网页里直接切换速度档位，也可以在 `.env` 里设置默认值：
+---
 
-```env
-FASTER_WHISPER_MODEL=base
-```
+## 常见问题
 
-可选值：
+**网站能打开，但小红书链接解析失败**
+→ Cookie 过期，按上面「Cookie 过期」步骤更新。
 
-- `tiny`：最快，准确率较低
-- `base`：速度和准确率更平衡
-- `small`：更稳一些，但更慢
+**网站能打开，但不能转文字**
+→ 依次检查：`ffmpeg` 是否安装、`.venv` 是否创建、`FASTER_WHISPER_PYTHON` 路径是否指向当前电脑的实际路径。
 
-## 10. 常见问题
+**npm start 启动失败，报 `Cannot find module`**
+→ 跑一次 `npm install` 再重试，通常是 pull 了新代码但没有更新依赖。
 
-### 1. 网站能打开，但不能转文字
+**第一次转写很慢**
+→ 正常，faster-whisper 第一次运行会下载模型，后续会快很多。
 
-通常检查这几项：
+---
 
-- `ffmpeg` 是否安装成功
-- `.venv` 是否创建成功
-- `faster-whisper` 是否安装成功
-- `FASTER_WHISPER_PYTHON` 路径是否正确
+## 转写速度档位
 
-### 2. 网站能打开，但小红书链接解析失败
+可以在网页里切换，也可以在 `.env` 里设置默认值：
 
-通常检查：
-
-- `XHS_COOKIE` 是否填了
-- Cookie 是否过期
-- 小红书是否需要重新登录
-
-### 3. X 视频解析失败
-
-通常检查：
-
-- `yt-dlp` 是否安装成功
-- `X_COOKIE` 或 `X_COOKIE_FILE` 是否配置
-- 链接是否是公开视频
-- X 是否要求登录
-
-### 4. 第一次转写很慢
-
-这是正常的。
-
-第一次运行 `faster-whisper` 会下载模型，后面会快很多。
-
-## 11. 项目结构
-
-```text
-public/                     前端页面
-scripts/transcribe_faster_whisper.py
-server.js                   后端服务
-.env.example                配置模板
-```
+| 档位 | 说明 |
+|------|------|
+| `tiny` | 最快，准确率较低 |
+| `base` | 速度和准确率平衡（推荐） |
+| `small` | 更准，但更慢 |
