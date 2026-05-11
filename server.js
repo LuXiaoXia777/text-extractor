@@ -21,7 +21,7 @@ if (HTTPS_PROXY) {
 }
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3001;
 const TRANSCRIBE_MODEL = process.env.FASTER_WHISPER_MODEL || "base";
 const PYTHON_BIN = process.env.FASTER_WHISPER_PYTHON || path.join(__dirname, ".venv/bin/python");
 const CHROME_EXECUTABLE_PATH =
