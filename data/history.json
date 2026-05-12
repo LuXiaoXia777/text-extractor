@@ -1,5 +1,103 @@
 [
   {
+    "id": "1778316390143-ah5rj9",
+    "createdAt": "2026-05-09T08:46:30.143Z",
+    "input": "35 【就离谱，Claude Design还能这样用？ - 一福UX | 小红书 - 你的生活兴趣社区】 😆 0l8xFXKiDmaTNxl 😆 https://www.xiaohongshu.com/discovery/item/69f81ca100000000380213c5?source=webshare&xhsshare=pc_web&xsec_token=CBp9lGPq2vvdhI3r_Dku9Yfm2zDWAI0oMlerRnw3uJhww=&xsec_source=pc_share",
+    "title": "就离谱，Claude Design还能这样用？ - 小红书",
+    "author": "一福UX关注",
+    "noteText": "#uiux #claude #设计师 #交互设计 #ai提示词 #ai工具 #前端 #科技公司 #ai提效 #token",
+    "finalUrl": "https://www.xiaohongshu.com/discovery/item/69f81ca100000000380213c5?source=webshare&xhsshare=pc_web&xsec_token=CBp9lGPq2vvdhI3r_Dku9Yfm2zDWAI0oMlerRnw3uJhww=&xsec_source=pc_share",
+    "mediaUrl": "https://sns-video-ak.xhscdn.com/stream/79/110/258/01e9f81c574d687d4f0370019df1304cbf_258.mp4?sign=78f37755076f3f9914d0a4ab26319325&t=6a03918c",
+    "cover": "",
+    "sourceType": "xiaohongshu-note",
+    "parserMode": "html",
+    "audioDurationSec": 142.827375,
+    "transcript": "两分钟但你了解前几天\n萨平的CODE翻译的七种功能\n这样才能知道怎样摆\n偷肯用在高润上\n打开CODE的战\n是一个为此\n这个版本的一个工作空间\n很好一点\n是我测对话\n又测工作区\n最直接的用法当然就是\n就U.I.U.I\n暗区品则\nWIFI\n或者开开克的产品\n可以出入提示执法兽\n提示执法提示之后\n都会操作一系列的功能\n细节让你回答和确认\n然后再帮你生成\n提示执下来WIFI也是这样\n更没太多人掌握的功能\n其实你还可以直接抓取任何网页的元素\n人进靠点开卡\n怎么靠着在卡扯\n偷偷随手可以画草层到对方框\n我们再来让靠直接深深的这个\n四种修改方式\n第一个右上角点Edit\n手动微调要元素\n第二个点桌\n可以在画不上直接画圈画标准\n是和你描述不幸福想要改哪里的时候\n3 点点卡门\n这样可以一次性评论提交多个建议\n靠的会根据这些评论\n这些修改\n4\n还这个tweet\n可以实施拖转滑快去瞧区间配色啊\n自豪的钱\n你还可以把你先有了第三次省位给它\n点第三次省\n你可以把你的设计系统上传\n还可以传logo啊自己这些\n咱们试一下\n点赛贵然后点券钉\ndangerate\n它会让你等个五分钟左右\n然后是理解你的这些组建\n还有规范\n这样你伸出来的端栗就更高可供性了\n除了做原型设计\n咱们还可以走ppt\n点击slide-dack创建文档\n收入提示服\n是可以帮你生成可以交互的HTNL排版也是文稿啦\n最后一种用法\n你还可以点击掀释\n这里选择Animation\n然后就可以创建文档制作动物号\n比如我在这里可以\n用上Gash功能画出我想要的画面\n再加上描述这一端\n我想要鼓的动画的提示服\n嘿 这算我怎么样\n这要是自己画\n真不知道得画上多久时间\n以上就是我尝试下来靠透的各种功能显示\n你们也快去试试吧",
+    "model": "base",
+    "provider": "faster-whisper",
+    "rawMetrics": {
+      "likeCount": null,
+      "collectCount": null,
+      "commentCount": null,
+      "shareCount": null,
+      "viewCount": null,
+      "exposureCount": null
+    },
+    "commentSamples": [],
+    "analytics": {
+      "metrics": {
+        "likeCount": null,
+        "collectCount": null,
+        "commentCount": null,
+        "shareCount": null,
+        "viewCount": null,
+        "exposureCount": null,
+        "engagementCount": 0
+      },
+      "ratios": {
+        "engagementRate": null,
+        "collectLikeRatio": null,
+        "commentLikeRatio": null
+      },
+      "contentDiagnosis": {
+        "contentTypes": [
+          "教程",
+          "干货",
+          "叙事"
+        ],
+        "titleInsights": [
+          "标题带问题导向，容易吸引目标人群点开。"
+        ],
+        "collectPotential": {
+          "level": "中",
+          "reasons": [
+            "文本信息密度较高，适合被收藏后反复查看。",
+            "内容呈现出知识提炼或经验总结特征。"
+          ]
+        },
+        "commentPotential": {
+          "level": "高",
+          "reasons": [
+            "内容里存在提问或引导表达，利于触发评论。",
+            "内容具备一定反差或争议切口。",
+            "第一人称叙事更容易激发代入和回复。"
+          ]
+        },
+        "conversionPotential": {
+          "level": "低",
+          "reasons": [
+            "内容里存在明确行动引导。"
+          ]
+        },
+        "suggestions": [
+          "结尾可增加一个明确提问，引导用户留言表达观点。"
+        ]
+      },
+      "commentInsight": {
+        "commentCount": null,
+        "hasCommentSamples": false,
+        "commentSamples": [],
+        "note": "当前仅分析评论数，评论内容洞察待后续抓取能力补齐。"
+      },
+      "summary": [
+        "这是一篇偏教程 / 干货 / 叙事的小红书笔记。",
+        "当前真实互动数据不完整，结论以内容结构分析为主。",
+        "评论层的讨论信号暂时一般，可以加强提问或争议点设计。"
+      ],
+      "limitations": [
+        "当前没有稳定抓到点赞、收藏、评论等真实互动数据，表现层判断仅供参考。",
+        "当前未抓到评论正文，评论洞察只基于评论数和内容结构推断。"
+      ]
+    },
+    "analyticsSummary": "这是一篇偏教程 / 干货 / 叙事的小红书笔记。 当前真实互动数据不完整，结论以内容结构分析为主。 评论层的讨论信号暂时一般，可以加强提问或争议点设计。",
+    "likeCount": null,
+    "collectCount": null,
+    "commentCount": null,
+    "shareCount": null,
+    "viewCount": null,
+    "transcriptPreview": "两分钟但你了解前几天 萨平的CODE翻译的七种功能 这样才能知道怎样摆 偷肯用在高润上 打开CODE的战 是一个为此 这个版本的一个工作空间 很好一点 是我测对话 又测工作区 最直接的用法当然就是 就U.I.U.I 暗区品则 WIFI 或者"
+  },
+  {
     "id": "1777795685447-p908bj",
     "createdAt": "2026-05-03T08:08:05.447Z",
     "input": "33 【15分钟Claude Code小白入门 - 第四种黑猩猩 | 小红书 - 你的生活兴趣社区】 😆 fm73L5RRjtZxS4m 😆 https://www.xiaohongshu.com/discovery/item/697de727000000002203b0bc?source=webshare&xhsshare=pc_web&xsec_token=ABSbcA6KkfLwes0LLUZ5zdLMnVK50BN6FvkmE8QiJi930=&xsec_source=pc_share",
