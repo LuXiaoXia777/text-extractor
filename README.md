@@ -73,6 +73,22 @@ npm run to-text -- "小红书分享文案里的链接" --json
 
 不传 `--output` 时，结果会自动保存到 `outputs/`。
 
+## 同步到 GitHub
+
+手动同步当前改动：
+
+```bash
+npm run sync
+```
+
+持续监听并自动同步：
+
+```bash
+npm run sync:watch
+```
+
+`sync:watch` 会一直运行，发现文件变化后等待一小段时间，再自动提交并推送到 GitHub。按 `Ctrl+C` 可以停止。
+
 ## 常见问题
 
 **小红书链接解析失败**
