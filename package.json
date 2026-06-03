@@ -6,7 +6,8 @@
   "main": "scripts/to_text.js",
   "scripts": {
     "to-text": "node scripts/to_text.js",
-    "start": "node scripts/to_text.js"
+    "start": "node scripts/to_text.js",
+    "sync": "bash scripts/sync_github.sh"
   },
   "engines": {
     "node": ">=18"
