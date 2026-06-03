@@ -89,6 +89,27 @@ npm run sync:watch
 
 `sync:watch` 会一直运行，发现文件变化后等待一小段时间，再自动提交并推送到 GitHub。按 `Ctrl+C` 可以停止。
 
+安装后台自动同步：
+
+```bash
+npm run sync:auto:install
+```
+
+安装后，系统登录时会自动启动监听。这个工作流会每 15 秒检查一次项目改动，发现变化后等待 20 秒，再自动提交并推送到 GitHub。
+
+停止并移除后台自动同步：
+
+```bash
+npm run sync:auto:uninstall
+```
+
+后台日志位置：
+
+```bash
+~/Library/Logs/text-extractor/autosync.log
+~/Library/Logs/text-extractor/autosync.err.log
+```
+
 ## 常见问题
 
 **小红书链接解析失败**

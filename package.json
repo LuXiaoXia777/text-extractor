@@ -8,7 +8,9 @@
     "to-text": "node scripts/to_text.js",
     "start": "node scripts/to_text.js",
     "sync": "bash scripts/sync_github.sh",
-    "sync:watch": "bash scripts/watch_sync_github.sh"
+    "sync:watch": "bash scripts/watch_sync_github.sh",
+    "sync:auto:install": "bash scripts/install_auto_sync.sh",
+    "sync:auto:uninstall": "bash scripts/uninstall_auto_sync.sh"
   },
   "engines": {
     "node": ">=18"
