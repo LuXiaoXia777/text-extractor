@@ -1,21 +1,19 @@
 {
-  "name": "xhs-link-to-text-web",
+  "name": "local-media-to-text",
   "version": "0.1.0",
   "private": true,
-  "description": "MVP for parsing Xiaohongshu share text and extracting note metadata.",
-  "main": "server.js",
+  "description": "Local scripts for converting video, links, audio, and images to text.",
+  "main": "scripts/to_text.js",
   "scripts": {
-    "dev": "node server.js",
-    "start": "node server.js"
+    "to-text": "node scripts/to_text.js",
+    "start": "node scripts/to_text.js"
   },
   "engines": {
     "node": ">=18"
   },
   "dependencies": {
-    "@anthropic-ai/sdk": "^0.95.1",
     "cheerio": "^1.2.0",
     "dotenv": "^17.4.2",
-    "express": "^5.2.1",
     "opencc-js": "^1.0.5",
     "puppeteer-core": "^24.42.0"
   }
