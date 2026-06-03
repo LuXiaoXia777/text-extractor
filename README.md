@@ -97,6 +97,14 @@ npm run sync:auto:install
 
 安装后，系统登录时会自动启动监听。这个工作流会每 15 秒检查一次项目改动，发现变化后等待 20 秒，再自动提交并推送到 GitHub。
 
+如果项目放在 macOS 的 `Documents`、`Desktop`、`Downloads` 等受保护目录里，后台服务可能会被系统隐私权限拦截。遇到这种情况，可以使用前台监听：
+
+```bash
+npm run sync:watch
+```
+
+或者把项目移动到非受保护目录后重新运行 `npm run sync:auto:install`。
+
 停止并移除后台自动同步：
 
 ```bash
